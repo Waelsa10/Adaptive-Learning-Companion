@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         allowedHosts: [
         'adaptive-learning-companion.onrender.com',
         'localhost'
-      ],  
+            },], 
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
