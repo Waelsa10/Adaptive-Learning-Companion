@@ -10,14 +10,13 @@ import { StarIcon } from './icons';
 interface LearningEngineProps {
   topic: string;
   onEndSession: () => void;
-  onApiKeyError: () => void;
 }
 
 const TOTAL_QUESTIONS = 5;
 const RESPONSE_TIME_THRESHOLD_MS = 10000; // 10 seconds to be considered a "quick" answer
 const STREAK_TO_LEVEL_UP = 2; // Number of consecutive correct & quick answers to increase difficulty
 
-export default function LearningEngine({ topic, onEndSession, onApiKeyError }: LearningEngineProps) {
+export default function LearningEngine({ topic, onEndSession }: LearningEngineProps) {
   const [activity, setActivity] = useState<LearningActivity | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [robotState, setRobotState] = useState<RobotState>(RobotState.Idle);
@@ -41,19 +40,16 @@ export default function LearningEngine({ topic, onEndSession, onApiKeyError }: L
     // Add a small delay for better UX
     await new Promise(res => setTimeout(res, 500));
     
-    try {
-        const newActivity = await generateLearningActivity(topic, difficulty, previousAttempt);
-        setActivity(newActivity);
-        setQuestionNumber(prev => prev + 1);
-        setQuestionStartTime(Date.now()); // Start timer for response
-        setIsLoading(false);
-        setRobotState(RobotState.Idle);
-    } catch (error) {
-        // This will only be the API key error, as other errors are handled inside the service
-        console.error("Caught an API Key error, notifying App component.", error);
-        onApiKeyError();
-    }
-  }, [topic, difficulty, onApiKeyError]);
+    // The service now handles errors and returns a fallback, so no try/catch is needed here.
+    const newActivity = await generateLearningActivity(topic, difficulty, previousAttempt);
+    
+    setActivity(newActivity);
+    setQuestionNumber(prev => prev + 1);
+    setQuestionStartTime(Date.now()); // Start timer for response
+    setIsLoading(false);
+    setRobotState(RobotState.Idle);
+
+  }, [topic, difficulty]);
 
   useEffect(() => {
     fetchNextActivity();

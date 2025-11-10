@@ -82,13 +82,8 @@ export async function generateLearningActivity(topic: string, difficulty: Diffic
     return parsed as LearningActivity;
   } catch (error) {
     console.error("Error generating learning activity:", error);
-
-    // Per guidelines, check for specific API key error and re-throw
-    if (error instanceof Error && error.message.includes("Requested entity was not found.")) {
-        throw error; // Re-throw to be caught by the UI layer
-    }
     
-    // Fallback to a simple activity in case of API error
+    // Fallback to a simple activity in case of any API error
     return {
         activityType: ActivityType.StoryQuestion,
         story: "Oh no! Sparky seems to have lost his signal. Let's try a default question.",
