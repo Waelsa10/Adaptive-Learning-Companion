@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { generateLearningActivity } from '../services/geminiService';
 import { LearningActivity, RobotState, PreviousAttempt, AnswerStatus, DifficultyLevel, ActivityType } from '../types';
@@ -9,13 +10,14 @@ import { StarIcon } from './icons';
 interface LearningEngineProps {
   topic: string;
   onEndSession: () => void;
+  onApiKeyError: () => void;
 }
 
 const TOTAL_QUESTIONS = 5;
 const RESPONSE_TIME_THRESHOLD_MS = 10000; // 10 seconds to be considered a "quick" answer
 const STREAK_TO_LEVEL_UP = 2; // Number of consecutive correct & quick answers to increase difficulty
 
-export default function LearningEngine({ topic, onEndSession }: LearningEngineProps) {
+export default function LearningEngine({ topic, onEndSession, onApiKeyError }: LearningEngineProps) {
   const [activity, setActivity] = useState<LearningActivity | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [robotState, setRobotState] = useState<RobotState>(RobotState.Idle);
@@ -39,13 +41,19 @@ export default function LearningEngine({ topic, onEndSession }: LearningEnginePr
     // Add a small delay for better UX
     await new Promise(res => setTimeout(res, 500));
     
-    const newActivity = await generateLearningActivity(topic, difficulty, previousAttempt);
-    setActivity(newActivity);
-    setQuestionNumber(prev => prev + 1);
-    setQuestionStartTime(Date.now()); // Start timer for response
-    setIsLoading(false);
-    setRobotState(RobotState.Idle);
-  }, [topic, difficulty]);
+    try {
+        const newActivity = await generateLearningActivity(topic, difficulty, previousAttempt);
+        setActivity(newActivity);
+        setQuestionNumber(prev => prev + 1);
+        setQuestionStartTime(Date.now()); // Start timer for response
+        setIsLoading(false);
+        setRobotState(RobotState.Idle);
+    } catch (error) {
+        // This will only be the API key error, as other errors are handled inside the service
+        console.error("Caught an API Key error, notifying App component.", error);
+        onApiKeyError();
+    }
+  }, [topic, difficulty, onApiKeyError]);
 
   useEffect(() => {
     fetchNextActivity();

@@ -75,10 +75,19 @@ export async function generateLearningActivity(topic: string, difficulty: Diffic
     });
 
     const text = response.text.trim();
+    if (!text) {
+        throw new Error("API returned an empty response.");
+    }
     const parsed = JSON.parse(text);
     return parsed as LearningActivity;
   } catch (error) {
     console.error("Error generating learning activity:", error);
+
+    // Per guidelines, check for specific API key error and re-throw
+    if (error instanceof Error && error.message.includes("Requested entity was not found.")) {
+        throw error; // Re-throw to be caught by the UI layer
+    }
+    
     // Fallback to a simple activity in case of API error
     return {
         activityType: ActivityType.StoryQuestion,
